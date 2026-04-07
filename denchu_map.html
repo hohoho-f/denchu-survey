@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電柱広告マップ｜福井</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --border: #222;
+    --accent: #e8ff00;
+    --green: #00e87a;
+    --yellow: #ffb800;
+    --red: #ff3b3b;
+    --blue: #00c8ff;
+    --text: #f0f0f0;
+    --muted: #555;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ヘッダー */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 1000;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo-main {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .stat.green .stat-num { color: var(--green); }
+  .stat.yellow .stat-num { color: var(--yellow); }
+  .stat.red .stat-num { color: var(--red); }
+  .stat.total .stat-num { color: var(--accent); }
+
+  /* 凡例 */
+  .legend {
+    position: absolute;
+    bottom: 24px;
+    left: 16px;
+    z-index: 1000;
+    background: rgba(10,10,10,0.92);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    backdrop-filter: blur(10px);
+  }
+
+  .legend-title {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .legend-item:last-child { margin-bottom: 0; }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* マップ */
+  #map {
+    flex: 1;
+    z-index: 1;
+  }
+
+  /* ポップアップカスタム */
+  .leaflet-popup-content-wrapper {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+    padding: 0 !important;
+  }
+
+  .leaflet-popup-content {
+    margin: 0 !important;
+    width: 260px !important;
+  }
+
+  .leaflet-popup-tip {
+    background: var(--surface) !important;
+  }
+
+  .leaflet-popup-close-button {
+    color: var(--muted) !important;
+    font-size: 18px !important;
+    top: 8px !important;
+    right: 10px !important;
+  }
+
+  .popup-inner {
+    padding: 16px;
+  }
+
+  .popup-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .popup-status.aki {
+    background: rgba(0,232,122,0.15);
+    color: var(--green);
+    border: 1px solid rgba(0,232,122,0.3);
+  }
+
+  .popup-status.ichibu {
+    background: rgba(255,184,0,0.15);
+    color: var(--yellow);
+    border: 1px solid rgba(255,184,0,0.3);
+  }
+
+  .popup-status.manpai {
+    background: rgba(255,59,59,0.15);
+    color: var(--red);
+    border: 1px solid rgba(255,59,59,0.3);
+  }
+
+  .popup-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 10px;
+    line-height: 1;
+  }
+
+  .popup-rows {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+
+  .popup-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .popup-row:last-child { border-bottom: none; }
+
+  .popup-key {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  .popup-val {
+    font-size: 12px;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+  }
+
+  .popup-photo {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .popup-photo img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .popup-photo-link {
+    display: block;
+    text-align: center;
+    padding: 6px;
+    font-size: 11px;
+    color: var(--blue);
+    text-decoration: none;
+    background: rgba(0,200,255,0.05);
+  }
+
+  /* ローディング */
+  .loading-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    gap: 20px;
+    transition: opacity 0.5s;
+  }
+
+  .loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+
+  .loading-bar-wrap {
+    width: 200px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loading-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: loadbar 1.5s ease-in-out infinite;
+  }
+
+  @keyframes loadbar {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  .loading-msg {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* フィルターバー */
+  .filter-bar {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 6px;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: rgba(10,10,10,0.9);
+    color: var(--muted);
+    backdrop-filter: blur(10px);
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .filter-btn.active-all { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active-aki { border-color: var(--green); color: var(--green); }
+  .filter-btn.active-ichibu { border-color: var(--yellow); color: var(--yellow); }
+  .filter-btn.active-manpai { border-color: var(--red); color: var(--red); }
+
+  .map-wrap {
+    flex: 1;
+    position: relative;
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">電柱MAP</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <div class="loading-msg">データを読み込み中...</div>
+</div>
+
+<header>
+  <div class="logo">
+    <span class="logo-main">電柱MAP</span>
+    <span class="logo-sub">福井市 電柱広告インベントリ</span>
+  </div>
+  <div class="header-stats">
+    <div class="stat total">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat green">
+      <div class="stat-num" id="statAki">0</div>
+      <div class="stat-label">空き</div>
+    </div>
+    <div class="stat yellow">
+      <div class="stat-num" id="statIchibu">0</div>
+      <div class="stat-label">一部</div>
+    </div>
+    <div class="stat red">
+      <div class="stat-num" id="statManpai">0</div>
+      <div class="stat-label">満杯</div>
+    </div>
+  </div>
+</header>
+
+<div class="map-wrap">
+  <div id="map"></div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active-all" onclick="filterMarkers('all', this)">すべて</button>
+    <button class="filter-btn" onclick="filterMarkers('aki', this)">🟢 空き</button>
+    <button class="filter-btn" onclick="filterMarkers('ichibu', this)">🟡 一部あり</button>
+    <button class="filter-btn" onclick="filterMarkers('manpai', this)">🔴 満杯</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">凡例</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>空き（広告なし）</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>一部あり</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>満杯</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>不明</div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyA6_JjW35k4RmC63bB1cA55qThzvH04Q4JKOLWIby5Xiywgh4QOurkywarLK0mmjA/exec';
+
+// 地図初期化（福井市中心）
+const map = L.map('map', {
+  center: [36.065, 136.22],
+  zoom: 15,
+  zoomControl: true
+});
+
+// ダークタイル
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  maxZoom: 19
+}).addTo(map);
+
+let allMarkers = [];
+let markerLayer = L.layerGroup().addTo(map);
+
+// 電柱SVGアイコン生成
+function createPoleIcon(color) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="44" viewBox="0 0 32 44">
+      <!-- 電線（上部） -->
+      <line x1="2" y1="8" x2="30" y2="8" stroke="${color}" stroke-width="1.5" opacity="0.6"/>
+      <line x1="2" y1="12" x2="30" y2="12" stroke="${color}" stroke-width="1" opacity="0.4"/>
+      <!-- 横アーム -->
+      <line x1="6" y1="8" x2="6" y2="16" stroke="${color}" stroke-width="1.5"/>
+      <line x1="26" y1="8" x2="26" y2="16" stroke="${color}" stroke-width="1.5"/>
+      <!-- 電柱本体 -->
+      <rect x="13" y="6" width="6" height="36" rx="3" fill="${color}" opacity="0.9"/>
+      <!-- 発光点 -->
+      <circle cx="16" cy="6" r="3" fill="${color}" opacity="1"/>
+      <circle cx="16" cy="6" r="5" fill="${color}" opacity="0.2"/>
+    </svg>
+  `;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [32, 44],
+    iconAnchor: [16, 44],
+    popupAnchor: [0, -44]
+  });
+}
+
+const icons = {
+  aki:    createPoleIcon('#00e87a'),
+  ichibu: createPoleIcon('#ffb800'),
+  manpai: createPoleIcon('#ff3b3b'),
+  unknown: createPoleIcon('#555')
+};
+
+function getStatusKey(jokyo) {
+  if (!jokyo) return 'unknown';
+  if (jokyo.includes('空き')) return 'aki';
+  if (jokyo.includes('一部')) return 'ichibu';
+  if (jokyo.includes('満杯')) return 'manpai';
+  return 'unknown';
+}
+
+function getStatusClass(jokyo) {
+  const k = getStatusKey(jokyo);
+  return k === 'unknown' ? 'aki' : k;
+}
+
+function buildPopup(d) {
+  const statusKey = getStatusKey(d['広告状況']);
+  const statusLabel = d['広告状況'] || '不明';
+  const photoUrl = d['写真URL'] || d['列1'] || d['列2'] || '';
+
+  const photoHtml = photoUrl
+    ? `<div class="popup-photo">
+        <a href="${photoUrl}" target="_blank" class="popup-photo-link">📷 写真を見る</a>
+       </div>`
+    : '';
+
+  return `
+    <div class="popup-inner">
+      <div class="popup-status ${statusKey}">
+        ${statusKey === 'aki' ? '🟢' : statusKey === 'ichibu' ? '🟡' : statusKey === 'manpai' ? '🔴' : '⚪'} ${statusLabel}
+      </div>
+      <div class="popup-number">${d['電柱番号'] || '番号不明'}</div>
+      <div class="popup-rows">
+        <div class="popup-row">
+          <span class="popup-key">管理会社</span>
+          <span class="popup-val">${d['管理会社'] || '不明'}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-key">空き枠</span>
+          <span class="popup-val">${d['空き枠種別'] || '不明'}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-key">広告主</span>
+          <span class="popup-val">${d['広告主名'] || 'なし'}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-key">業種</span>
+          <span class="popup-val">${d['業種'] || 'なし'}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-key">座標</span>
+          <span class="popup-val" style="font-size:10px">${parseFloat(d['緯度']).toFixed(5)}, ${parseFloat(d['経度']).toFixed(5)}</span>
+        </div>
+      </div>
+      ${photoHtml}
+    </div>
+  `;
+}
+
+function filterMarkers(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.className = 'filter-btn');
+  btn.classList.add('active-' + type);
+
+  allMarkers.forEach(({ marker, statusKey }) => {
+    if (type === 'all' || statusKey === type) {
+      if (!map.hasLayer(marker)) markerLayer.addLayer(marker);
+    } else {
+      markerLayer.removeLayer(marker);
+    }
+  });
+}
+
+// データ読み込み
+async function loadData() {
+  try {
+    const res = await fetch(GAS_URL);
+    const data = await res.json();
+
+    let countAki = 0, countIchibu = 0, countManpai = 0;
+    const bounds = [];
+
+    data.forEach(d => {
+      const lat = parseFloat(d['緯度']);
+      const lng = parseFloat(d['経度']);
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+      const statusKey = getStatusKey(d['広告状況']);
+      const icon = icons[statusKey];
+      const marker = L.marker([lat, lng], { icon })
+        .bindPopup(buildPopup(d), { maxWidth: 280 });
+
+      markerLayer.addLayer(marker);
+      allMarkers.push({ marker, statusKey });
+      bounds.push([lat, lng]);
+
+      if (statusKey === 'aki') countAki++;
+      else if (statusKey === 'ichibu') countIchibu++;
+      else if (statusKey === 'manpai') countManpai++;
+    });
+
+    // 統計更新
+    document.getElementById('statTotal').textContent = data.length;
+    document.getElementById('statAki').textContent = countAki;
+    document.getElementById('statIchibu').textContent = countIchibu;
+    document.getElementById('statManpai').textContent = countManpai;
+
+    // 全マーカーが見えるようにフィット
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [60, 60] });
+    }
+
+    // ローディング非表示
+    document.getElementById('loadingScreen').classList.add('hide');
+    setTimeout(() => document.getElementById('loadingScreen').style.display = 'none', 600);
+
+  } catch (err) {
+    console.error(err);
+    document.querySelector('.loading-msg').textContent = 'データの読み込みに失敗しました';
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
