@@ -441,45 +441,7 @@ function removePhoto(idx, event) {
   document.getElementById('slot' + idx).classList.remove('has-photo');
 }
 
-async function analyzeWithClaude(images) {
-  const content = [];
-  images.forEach(b64 => {
-    if (b64) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } });
-  });
-  content.push({
-    type: 'text',
-    text: `これらは日本の電柱の写真です。写真から情報を読み取り、以下のJSON形式のみで返してください。説明文は不要です。
-
-{
-  "denchiNumber": "電柱番号（プレートから読み取る、例：8206 ト10-12）",
-  "kanriKaisha": "北陸電力 または NTT または 不明",
-  "koukokuJokyo": "空き（広告なし） または 一部あり または 満杯",
-  "koukokuNushi": "広告主名（なければ空文字）",
-  "gyoshu": "医療・クリニック / 飲食 / 不動産 / 美容・サロン / 小売 / 教育 / その他 / なし",
-  "akiWakuShubetsu": "突出のみ空き / 巻付のみ空き / 両方空き / 空きなし"
-}
-
-判断ポイント：
-・プレートに「NTT」「N柱」→ NTT
-・プレートに井桁マーク・「E柱」→ 北陸電力
-・電柱から横に飛び出す看板 → 突出看板
-・電柱に巻きつく縦長の看板 → 巻付看板`
-  });
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content }]
-    })
-  });
-
-  const data = await res.json();
-  const text = data.content[0].text;
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
-}
+// Claude APIはGAS経由で呼ぶ（CORS対策）
 
 async function submitForm() {
   const hasPhoto = photoBase64.some(p => p !== null);
@@ -491,9 +453,26 @@ async function submitForm() {
   document.getElementById('submitBtn').disabled = true;
 
   try {
-    msg.textContent = '🤖 AIが写真を解析中...';
-    const aiData = await analyzeWithClaude(photoBase64);
+    msg.textContent = '🤖 AIで解析・送信中...';
+    const validImages = photoBase64.filter(p => p !== null);
 
+    // 全データをGASに送信（GAS側でClaude APIを呼ぶ）
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        lat: currentLat || '',
+        lng: currentLng || '',
+        photos: validImages,
+        biko: document.getElementById('biko').value.trim(),
+        fileName: `電柱_${Date.now()}.jpg`
+      })
+    });
+
+    const result = await res.json();
+
+    if (result.status !== 'success') throw new Error(result.message || '送信失敗');
+
+    const aiData = result.aiData || {};
     document.getElementById('r-number').textContent = aiData.denchiNumber || '不明';
     document.getElementById('r-kanri').textContent = aiData.kanriKaisha || '不明';
     document.getElementById('r-koukoku').textContent = aiData.koukokuJokyo || '不明';
@@ -501,20 +480,6 @@ async function submitForm() {
     document.getElementById('r-gyoshu').textContent = aiData.gyoshu || 'なし';
     document.getElementById('r-aki').textContent = aiData.akiWakuShubetsu || '不明';
     document.getElementById('aiResult').classList.add('show');
-
-    msg.textContent = '📤 データを送信中...';
-    const validImages = photoBase64.filter(p => p !== null);
-    await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        lat: currentLat || '',
-        lng: currentLng || '',
-        ...aiData,
-        biko: document.getElementById('biko').value.trim(),
-        photo: validImages[0] || null,
-        fileName: `電柱_${Date.now()}.jpg`
-      })
-    });
 
     showToast('✅ 送信完了！', 'success');
     setTimeout(() => resetForm(), 2500);
