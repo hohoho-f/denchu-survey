@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>電柱調査</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222;
+    --border: #2e2e2e;
+    --accent: #e8ff00;
+    --accent2: #00c8ff;
+    --text: #f0f0f0;
+    --text-muted: #777;
+    --success: #00e87a;
+    --error: #ff4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+  }
+
+  header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  .gps-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .gps-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .gps-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .gps-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .gps-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+  .gps-dot.error { background: var(--error); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .gps-coords {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .coord-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .coord-box label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .coord-box span { font-size: 14px; font-family: 'Courier New', monospace; color: var(--accent2); }
+
+  .btn-gps {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-gps:active { background: var(--accent); color: #000; }
+
+  .section { margin-bottom: 20px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .photo-slot {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .photo-slot:active { border-color: var(--accent); }
+
+  .photo-slot input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+  }
+
+  .photo-slot .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .photo-slot .placeholder span { font-size: 28px; }
+  .photo-slot .placeholder p { font-size: 11px; color: var(--text-muted); }
+
+  .photo-slot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .photo-slot .remove-btn {
+    position: absolute;
+    top: 6px; right: 6px;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    font-size: 14px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .photo-slot.has-photo img { display: block; }
+  .photo-slot.has-photo .placeholder { display: none; }
+  .photo-slot.has-photo .remove-btn { display: flex; }
+  .photo-slot.has-photo input[type="file"] { display: none; }
+
+  .ai-result {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .ai-result.show { display: block; }
+
+  .ai-result-title {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .ai-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .ai-row:last-child { border-bottom: none; }
+  .ai-key { font-size: 12px; color: var(--text-muted); flex-shrink: 0; width: 90px; }
+  .ai-val { font-size: 13px; color: var(--text); text-align: right; word-break: break-all; }
+
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    min-height: 80px;
+    -webkit-appearance: none;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--text-muted); font-size: 14px; }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-msg { color: var(--text-muted); font-size: 14px; text-align: center; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    z-index: 300;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--error); color: var(--error); }
+  .toast.info { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🗼 電柱調査</h1>
+  <div class="subtitle">写真を撮るだけ。AIが自動解析します</div>
+</header>
+
+<div class="container">
+
+  <!-- GPS -->
+  <div class="gps-card">
+    <div class="gps-status">
+      <div class="gps-dot" id="gpsDot"></div>
+      <span style="font-size:13px;color:var(--text-muted)" id="gpsLabel">位置情報未取得</span>
+    </div>
+    <div class="gps-coords">
+      <div class="coord-box">
+        <label>緯度</label>
+        <span id="latDisplay">--</span>
+      </div>
+      <div class="coord-box">
+        <label>経度</label>
+        <span id="lngDisplay">--</span>
+      </div>
+    </div>
+    <button class="btn-gps" onclick="getLocation()">📍 現在地を取得</button>
+  </div>
+
+  <!-- 写真 -->
+  <div class="section">
+    <div class="section-label">写真（最大4枚）</div>
+    <div class="photo-grid">
+      <div class="photo-slot" id="slot0">
+        <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(0,event)">
+        <div class="placeholder"><span>📷</span><p>撮影 / 選択</p></div>
+        <img id="img0">
+        <button class="remove-btn" onclick="removePhoto(0,event)">×</button>
+      </div>
+      <div class="photo-slot" id="slot1">
+        <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(1,event)">
+        <div class="placeholder"><span>📷</span><p>撮影 / 選択</p></div>
+        <img id="img1">
+        <button class="remove-btn" onclick="removePhoto(1,event)">×</button>
+      </div>
+      <div class="photo-slot" id="slot2">
+        <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(2,event)">
+        <div class="placeholder"><span>📷</span><p>撮影 / 選択</p></div>
+        <img id="img2">
+        <button class="remove-btn" onclick="removePhoto(2,event)">×</button>
+      </div>
+      <div class="photo-slot" id="slot3">
+        <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(3,event)">
+        <div class="placeholder"><span>📷</span><p>撮影 / 選択</p></div>
+        <img id="img3">
+        <button class="remove-btn" onclick="removePhoto(3,event)">×</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI解析結果 -->
+  <div class="ai-result" id="aiResult">
+    <div class="ai-result-title">🤖 AI解析結果</div>
+    <div class="ai-row"><span class="ai-key">電柱番号</span><span class="ai-val" id="r-number">-</span></div>
+    <div class="ai-row"><span class="ai-key">管理会社</span><span class="ai-val" id="r-kanri">-</span></div>
+    <div class="ai-row"><span class="ai-key">広告状況</span><span class="ai-val" id="r-koukoku">-</span></div>
+    <div class="ai-row"><span class="ai-key">広告主名</span><span class="ai-val" id="r-nushi">-</span></div>
+    <div class="ai-row"><span class="ai-key">業種</span><span class="ai-val" id="r-gyoshu">-</span></div>
+    <div class="ai-row"><span class="ai-key">空き枠種別</span><span class="ai-val" id="r-aki">-</span></div>
+  </div>
+
+  <!-- 備考 -->
+  <div class="section">
+    <div class="section-label">備考</div>
+    <textarea id="biko" placeholder="気になったことがあれば自由に記入"></textarea>
+  </div>
+
+  <button class="btn-submit" id="submitBtn" onclick="submitForm()">📤 解析して送信</button>
+
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-msg" id="loadingMsg">AIが写真を解析中...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyA6_JjW35k4RmC63bB1cA55qThzvH04Q4JKOLWIby5Xiywgh4QOurkywarLK0mmjA/exec';
+
+let currentLat = null;
+let currentLng = null;
+let photoBase64 = [null, null, null, null];
+
+function getLocation() {
+  const dot = document.getElementById('gpsDot');
+  const label = document.getElementById('gpsLabel');
+  dot.className = 'gps-dot loading';
+  label.textContent = '取得中...';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      currentLat = pos.coords.latitude.toFixed(6);
+      currentLng = pos.coords.longitude.toFixed(6);
+      document.getElementById('latDisplay').textContent = currentLat;
+      document.getElementById('lngDisplay').textContent = currentLng;
+      dot.className = 'gps-dot active';
+      label.textContent = '取得完了';
+      showToast('📍 位置情報を取得しました', 'success');
+    },
+    () => {
+      dot.className = 'gps-dot error';
+      label.textContent = '取得失敗';
+      showToast('位置情報の取得に失敗しました', 'error');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+function handlePhoto(idx, event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    photoBase64[idx] = e.target.result.split(',')[1];
+    document.getElementById('img' + idx).src = e.target.result;
+    document.getElementById('slot' + idx).classList.add('has-photo');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(idx, event) {
+  event.stopPropagation();
+  event.preventDefault();
+  photoBase64[idx] = null;
+  document.getElementById('img' + idx).src = '';
+  document.getElementById('slot' + idx).classList.remove('has-photo');
+}
+
+async function analyzeWithClaude(images) {
+  const content = [];
+  images.forEach(b64 => {
+    if (b64) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } });
+  });
+  content.push({
+    type: 'text',
+    text: `これらは日本の電柱の写真です。写真から情報を読み取り、以下のJSON形式のみで返してください。説明文は不要です。
+
+{
+  "denchiNumber": "電柱番号（プレートから読み取る、例：8206 ト10-12）",
+  "kanriKaisha": "北陸電力 または NTT または 不明",
+  "koukokuJokyo": "空き（広告なし） または 一部あり または 満杯",
+  "koukokuNushi": "広告主名（なければ空文字）",
+  "gyoshu": "医療・クリニック / 飲食 / 不動産 / 美容・サロン / 小売 / 教育 / その他 / なし",
+  "akiWakuShubetsu": "突出のみ空き / 巻付のみ空き / 両方空き / 空きなし"
+}
+
+判断ポイント：
+・プレートに「NTT」「N柱」→ NTT
+・プレートに井桁マーク・「E柱」→ 北陸電力
+・電柱から横に飛び出す看板 → 突出看板
+・電柱に巻きつく縦長の看板 → 巻付看板`
+  });
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content }]
+    })
+  });
+
+  const data = await res.json();
+  const text = data.content[0].text;
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+async function submitForm() {
+  const hasPhoto = photoBase64.some(p => p !== null);
+  if (!hasPhoto) { showToast('写真を1枚以上撮影してください', 'error'); return; }
+
+  const overlay = document.getElementById('loadingOverlay');
+  const msg = document.getElementById('loadingMsg');
+  overlay.classList.add('show');
+  document.getElementById('submitBtn').disabled = true;
+
+  try {
+    msg.textContent = '🤖 AIが写真を解析中...';
+    const aiData = await analyzeWithClaude(photoBase64);
+
+    document.getElementById('r-number').textContent = aiData.denchiNumber || '不明';
+    document.getElementById('r-kanri').textContent = aiData.kanriKaisha || '不明';
+    document.getElementById('r-koukoku').textContent = aiData.koukokuJokyo || '不明';
+    document.getElementById('r-nushi').textContent = aiData.koukokuNushi || 'なし';
+    document.getElementById('r-gyoshu').textContent = aiData.gyoshu || 'なし';
+    document.getElementById('r-aki').textContent = aiData.akiWakuShubetsu || '不明';
+    document.getElementById('aiResult').classList.add('show');
+
+    msg.textContent = '📤 データを送信中...';
+    const validImages = photoBase64.filter(p => p !== null);
+    await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        lat: currentLat || '',
+        lng: currentLng || '',
+        ...aiData,
+        biko: document.getElementById('biko').value.trim(),
+        photo: validImages[0] || null,
+        fileName: `電柱_${Date.now()}.jpg`
+      })
+    });
+
+    showToast('✅ 送信完了！', 'success');
+    setTimeout(() => resetForm(), 2500);
+
+  } catch (err) {
+    showToast('エラー: ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    overlay.classList.remove('show');
+    document.getElementById('submitBtn').disabled = false;
+  }
+}
+
+function resetForm() {
+  photoBase64 = [null, null, null, null];
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('img' + i).src = '';
+    document.getElementById('slot' + i).classList.remove('has-photo');
+  }
+  document.getElementById('biko').value = '';
+  document.getElementById('aiResult').classList.remove('show');
+  currentLat = null; currentLng = null;
+  document.getElementById('latDisplay').textContent = '--';
+  document.getElementById('lngDisplay').textContent = '--';
+  document.getElementById('gpsDot').className = 'gps-dot';
+  document.getElementById('gpsLabel').textContent = '位置情報未取得';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `toast ${type} show`;
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
