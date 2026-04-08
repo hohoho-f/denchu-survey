@@ -25,7 +25,7 @@
     color: var(--text);
     font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
     min-height: 100vh;
-    padding-bottom: 60px;
+    padding-bottom: 80px;
   }
 
   header {
@@ -37,25 +37,31 @@
     z-index: 100;
   }
 
-  header h1 {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-  }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; color: var(--accent); }
+  header .subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-  header .subtitle {
+  .container { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+
+  /* ステップインジケーター */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+  .step {
+    flex: 1;
+    text-align: center;
     font-size: 11px;
     color: var(--text-muted);
-    margin-top: 2px;
+    padding: 8px 4px;
+    border-bottom: 2px solid var(--border);
+    transition: all 0.2s;
   }
+  .step.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  .step.done { color: var(--success); border-bottom-color: var(--success); }
 
-  .container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px 16px;
-  }
-
+  /* GPS */
   .gps-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -63,139 +69,40 @@
     padding: 16px;
     margin-bottom: 20px;
   }
-
-  .gps-status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .gps-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    flex-shrink: 0;
-  }
+  .gps-status { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .gps-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
   .gps-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
   .gps-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
   .gps-dot.error { background: var(--error); }
-
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  .gps-coords {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .coord-box {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-  }
+  .gps-coords { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .coord-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
   .coord-box label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.1em; }
   .coord-box span { font-size: 14px; font-family: 'Courier New', monospace; color: var(--accent2); }
-
-  .btn-gps {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
+  .btn-gps { width: 100%; background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .btn-gps:active { background: var(--accent); color: #000; }
 
+  /* セクション */
   .section { margin-bottom: 20px; }
+  .section-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
 
-  .section-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 10px;
-  }
-
-  .photo-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .photo-slot {
-    aspect-ratio: 1;
-    background: var(--surface);
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
+  /* 写真グリッド */
+  .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .photo-slot { aspect-ratio: 1; background: var(--surface); border: 2px dashed var(--border); border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .photo-slot:active { border-color: var(--accent); }
-
-  .photo-slot input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-    z-index: 5;
-  }
-
-  .photo-slot .placeholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    pointer-events: none;
-  }
+  .photo-slot input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 5; }
+  .photo-slot .placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
   .photo-slot .placeholder span { font-size: 28px; }
   .photo-slot .placeholder p { font-size: 11px; color: var(--text-muted); }
-
-  .photo-slot img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none;
-  }
-
-  .photo-slot .remove-btn {
-    position: absolute;
-    top: 6px; right: 6px;
-    background: rgba(0,0,0,0.75);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 26px; height: 26px;
-    font-size: 14px;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-  }
-
+  .photo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+  .photo-slot .remove-btn { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.75); color: white; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 14px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 10; }
   .photo-slot.has-photo img { display: block; }
   .photo-slot.has-photo .placeholder { display: none; }
   .photo-slot.has-photo .remove-btn { display: flex; }
   .photo-slot.has-photo input[type="file"] { display: none; }
 
-  .ai-result {
+  /* 解析結果（編集可能） */
+  .result-card {
     background: var(--surface);
     border: 1px solid var(--accent);
     border-radius: 12px;
@@ -203,29 +110,46 @@
     margin-bottom: 20px;
     display: none;
   }
-  .ai-result.show { display: block; }
+  .result-card.show { display: block; }
+  .result-card-title { font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
 
-  .ai-result-title {
-    font-size: 11px;
-    color: var(--accent);
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
+  .field-row { margin-bottom: 14px; }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+
+  .field-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    -webkit-appearance: none;
   }
+  .field-input:focus { border-color: var(--accent); }
 
-  .ai-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
+  .field-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
   }
-  .ai-row:last-child { border-bottom: none; }
-  .ai-key { font-size: 12px; color: var(--text-muted); flex-shrink: 0; width: 90px; }
-  .ai-val { font-size: 13px; color: var(--text); text-align: right; word-break: break-all; }
+  .field-select:focus { border-color: var(--accent); }
 
+  /* 備考 */
   textarea {
     width: 100%;
     background: var(--surface);
@@ -243,6 +167,24 @@
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: var(--text-muted); font-size: 14px; }
 
+  /* ボタン */
+  .btn-analyze {
+    width: 100%;
+    background: var(--surface);
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 12px;
+  }
+  .btn-analyze:active { background: var(--accent); color: #000; }
+  .btn-analyze:disabled { border-color: var(--border); color: var(--text-muted); cursor: not-allowed; }
+
   .btn-submit {
     width: 100%;
     background: var(--accent);
@@ -255,48 +197,21 @@
     letter-spacing: 0.05em;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    display: none;
   }
+  .btn-submit.show { display: block; }
   .btn-submit:active { transform: scale(0.98); }
   .btn-submit:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
 
-  .loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-    flex-direction: column;
-    gap: 16px;
-  }
+  /* ローディング */
+  .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 200; flex-direction: column; gap: 16px; }
   .loading-overlay.show { display: flex; }
-
-  .spinner {
-    width: 48px; height: 48px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
+  .spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .loading-msg { color: var(--text-muted); font-size: 14px; text-align: center; }
 
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 20px;
-    font-size: 14px;
-    z-index: 300;
-    transition: transform 0.3s;
-    white-space: nowrap;
-  }
+  /* トースト */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; font-size: 14px; z-index: 300; transition: transform 0.3s; white-space: nowrap; max-width: 90vw; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.success { border-color: var(--success); color: var(--success); }
   .toast.error { border-color: var(--error); color: var(--error); }
@@ -312,6 +227,13 @@
 
 <div class="container">
 
+  <!-- ステップ -->
+  <div class="steps">
+    <div class="step active" id="step1">① 撮影</div>
+    <div class="step" id="step2">② 確認・修正</div>
+    <div class="step" id="step3">③ 送信完了</div>
+  </div>
+
   <!-- GPS -->
   <div class="gps-card">
     <div class="gps-status">
@@ -319,14 +241,8 @@
       <span style="font-size:13px;color:var(--text-muted)" id="gpsLabel">位置情報未取得</span>
     </div>
     <div class="gps-coords">
-      <div class="coord-box">
-        <label>緯度</label>
-        <span id="latDisplay">--</span>
-      </div>
-      <div class="coord-box">
-        <label>経度</label>
-        <span id="lngDisplay">--</span>
-      </div>
+      <div class="coord-box"><label>緯度</label><span id="latDisplay">--</span></div>
+      <div class="coord-box"><label>経度</label><span id="lngDisplay">--</span></div>
     </div>
     <button class="btn-gps" onclick="getLocation()">📍 現在地を取得</button>
   </div>
@@ -337,13 +253,13 @@
     <div class="photo-grid">
       <div class="photo-slot" id="slot0">
         <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(0,event)">
-        <div class="placeholder"><span>📷</span><p>撮影 / 選択</p></div>
+        <div class="placeholder"><span>📷</span><p>引き（全体）</p></div>
         <img id="img0">
         <button class="remove-btn" onclick="removePhoto(0,event)">×</button>
       </div>
       <div class="photo-slot" id="slot1">
         <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(1,event)">
-        <div class="placeholder"><span>📷</span><p>撮影 / 選択</p></div>
+        <div class="placeholder"><span>📷</span><p>プレートアップ</p></div>
         <img id="img1">
         <button class="remove-btn" onclick="removePhoto(1,event)">×</button>
       </div>
@@ -362,15 +278,59 @@
     </div>
   </div>
 
-  <!-- AI解析結果 -->
-  <div class="ai-result" id="aiResult">
-    <div class="ai-result-title">🤖 AI解析結果</div>
-    <div class="ai-row"><span class="ai-key">電柱番号</span><span class="ai-val" id="r-number">-</span></div>
-    <div class="ai-row"><span class="ai-key">管理会社</span><span class="ai-val" id="r-kanri">-</span></div>
-    <div class="ai-row"><span class="ai-key">広告状況</span><span class="ai-val" id="r-koukoku">-</span></div>
-    <div class="ai-row"><span class="ai-key">広告主名</span><span class="ai-val" id="r-nushi">-</span></div>
-    <div class="ai-row"><span class="ai-key">業種</span><span class="ai-val" id="r-gyoshu">-</span></div>
-    <div class="ai-row"><span class="ai-key">空き枠種別</span><span class="ai-val" id="r-aki">-</span></div>
+  <!-- 解析ボタン -->
+  <button class="btn-analyze" id="analyzeBtn" onclick="analyzePhotos()">🤖 AI解析する</button>
+
+  <!-- 解析結果（編集可能） -->
+  <div class="result-card" id="resultCard">
+    <div class="result-card-title">🤖 AI解析結果 <span style="font-size:10px;color:var(--text-muted);font-weight:400">— 修正してから送信してください</span></div>
+
+    <div class="field-row">
+      <div class="field-label">電柱番号</div>
+      <input class="field-input" id="f-number" type="text" placeholder="例：8206 ト10-12">
+    </div>
+    <div class="field-row">
+      <div class="field-label">管理会社</div>
+      <select class="field-select" id="f-kanri">
+        <option value="北陸電力">北陸電力</option>
+        <option value="NTT">NTT</option>
+        <option value="不明">不明</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field-label">広告状況</div>
+      <select class="field-select" id="f-koukoku">
+        <option value="両方空き">両方空き</option>
+        <option value="一部空き">一部空き</option>
+        <option value="満杯">満杯</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field-label">広告主名</div>
+      <input class="field-input" id="f-nushi" type="text" placeholder="広告がある場合のみ">
+    </div>
+    <div class="field-row">
+      <div class="field-label">業種</div>
+      <select class="field-select" id="f-gyoshu">
+        <option value="なし">なし</option>
+        <option value="医療・クリニック">医療・クリニック</option>
+        <option value="飲食">飲食</option>
+        <option value="不動産">不動産</option>
+        <option value="美容・サロン">美容・サロン</option>
+        <option value="小売">小売</option>
+        <option value="教育">教育</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field-label">空き枠種別</div>
+      <select class="field-select" id="f-aki">
+        <option value="両方空き">両方空き</option>
+        <option value="突出のみ空き">突出のみ空き</option>
+        <option value="巻付のみ空き">巻付のみ空き</option>
+        <option value="空きなし">空きなし</option>
+      </select>
+    </div>
   </div>
 
   <!-- 備考 -->
@@ -379,7 +339,8 @@
     <textarea id="biko" placeholder="気になったことがあれば自由に記入"></textarea>
   </div>
 
-  <button class="btn-submit" id="submitBtn" onclick="submitForm()">📤 解析して送信</button>
+  <!-- 送信ボタン -->
+  <button class="btn-submit" id="submitBtn" onclick="submitForm()">📤 この内容で送信する</button>
 
 </div>
 
@@ -397,6 +358,7 @@ let currentLat = null;
 let currentLng = null;
 let photoBase64 = [null, null, null, null];
 
+// GPS
 function getLocation() {
   const dot = document.getElementById('gpsDot');
   const label = document.getElementById('gpsLabel');
@@ -421,6 +383,7 @@ function getLocation() {
   );
 }
 
+// 写真（圧縮あり）
 function handlePhoto(idx, event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -432,8 +395,7 @@ function handlePhoto(idx, event) {
       const MAX = 1200;
       let w = img.width, h = img.height;
       if (w > MAX) { h = h * MAX / w; w = MAX; }
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL('image/jpeg', 0.7);
       photoBase64[idx] = compressed.split(',')[1];
@@ -453,30 +415,101 @@ function removePhoto(idx, event) {
   document.getElementById('slot' + idx).classList.remove('has-photo');
 }
 
-// Claude APIはGAS経由で呼ぶ（CORS対策）
+// ステップ更新
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
 
-async function submitForm() {
+// ① AI解析のみ
+async function analyzePhotos() {
   const hasPhoto = photoBase64.some(p => p !== null);
   if (!hasPhoto) { showToast('写真を1枚以上撮影してください', 'error'); return; }
 
   const overlay = document.getElementById('loadingOverlay');
   const msg = document.getElementById('loadingMsg');
   overlay.classList.add('show');
-  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('analyzeBtn').disabled = true;
 
   try {
-    msg.textContent = '🤖 AIで解析・送信中...';
+    msg.textContent = '🤖 AIが写真を解析中...';
     const validImages = photoBase64.filter(p => p !== null);
 
-    // 全データをGASに送信（GAS側でClaude APIを呼ぶ）
     const res = await fetch(GAS_URL, {
       method: 'POST',
       body: JSON.stringify({
+        action: 'analyze',
+        photos: validImages
+      })
+    });
+
+    const result = await res.json();
+    if (result.status === 'error') throw new Error(result.message);
+
+    const aiData = result.aiData || {};
+
+    // フォームに反映
+    document.getElementById('f-number').value = aiData.denchiNumber || '';
+    setSelectValue('f-kanri', aiData.kanriKaisha);
+    setSelectValue('f-koukoku', aiData.koukokuJokyo);
+    document.getElementById('f-nushi').value = aiData.koukokuNushi || '';
+    setSelectValue('f-gyoshu', aiData.gyoshu);
+    setSelectValue('f-aki', aiData.akiWakuShubetsu);
+
+    // 結果カードと送信ボタンを表示
+    document.getElementById('resultCard').classList.add('show');
+    document.getElementById('submitBtn').classList.add('show');
+    setStep(2);
+
+    showToast('✅ 解析完了！内容を確認してください', 'success');
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    showToast('エラー: ' + err.message, 'error');
+    document.getElementById('analyzeBtn').disabled = false;
+  } finally {
+    overlay.classList.remove('show');
+  }
+}
+
+function setSelectValue(id, value) {
+  const sel = document.getElementById(id);
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === value) { sel.selectedIndex = i; return; }
+  }
+}
+
+// ② 送信のみ（編集済みデータを送る）
+async function submitForm() {
+  const overlay = document.getElementById('loadingOverlay');
+  const msg = document.getElementById('loadingMsg');
+  overlay.classList.add('show');
+  document.getElementById('submitBtn').disabled = true;
+
+  try {
+    msg.textContent = '📤 送信中...';
+    const validImages = photoBase64.filter(p => p !== null);
+
+    const editedData = {
+      denchiNumber: document.getElementById('f-number').value.trim(),
+      kanriKaisha: document.getElementById('f-kanri').value,
+      koukokuJokyo: document.getElementById('f-koukoku').value,
+      koukokuNushi: document.getElementById('f-nushi').value.trim(),
+      gyoshu: document.getElementById('f-gyoshu').value,
+      akiWakuShubetsu: document.getElementById('f-aki').value
+    };
+
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'submit',
         lat: currentLat || '',
         lng: currentLng || '',
         photos: validImages,
         biko: document.getElementById('biko').value.trim(),
-        fileName: `電柱_${Date.now()}.jpg`
+        ...editedData
       })
     });
 
@@ -486,24 +519,14 @@ async function submitForm() {
       showToast(result.message, 'error');
       return;
     }
-
     if (result.status !== 'success') throw new Error(result.message || '送信失敗');
 
-    const aiData = result.aiData || {};
-    document.getElementById('r-number').textContent = aiData.denchiNumber || '不明';
-    document.getElementById('r-kanri').textContent = aiData.kanriKaisha || '不明';
-    document.getElementById('r-koukoku').textContent = aiData.koukokuJokyo || '不明';
-    document.getElementById('r-nushi').textContent = aiData.koukokuNushi || 'なし';
-    document.getElementById('r-gyoshu').textContent = aiData.gyoshu || 'なし';
-    document.getElementById('r-aki').textContent = aiData.akiWakuShubetsu || '不明';
-    document.getElementById('aiResult').classList.add('show');
-
+    setStep(3);
     showToast('✅ 送信完了！', 'success');
     setTimeout(() => resetForm(), 2500);
 
   } catch (err) {
     showToast('エラー: ' + err.message, 'error');
-    console.error(err);
   } finally {
     overlay.classList.remove('show');
     document.getElementById('submitBtn').disabled = false;
@@ -517,12 +540,15 @@ function resetForm() {
     document.getElementById('slot' + i).classList.remove('has-photo');
   }
   document.getElementById('biko').value = '';
-  document.getElementById('aiResult').classList.remove('show');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('submitBtn').classList.remove('show');
+  document.getElementById('analyzeBtn').disabled = false;
   currentLat = null; currentLng = null;
   document.getElementById('latDisplay').textContent = '--';
   document.getElementById('lngDisplay').textContent = '--';
   document.getElementById('gpsDot').className = 'gps-dot';
   document.getElementById('gpsLabel').textContent = '位置情報未取得';
+  setStep(1);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -530,7 +556,7 @@ function showToast(msg, type = 'info') {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.className = `toast ${type} show`;
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  setTimeout(() => toast.classList.remove('show'), 3500);
 }
 </script>
 </body>
